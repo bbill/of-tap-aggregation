@@ -1,0 +1,25 @@
+[
+    {
+        "name": "rule1",
+				"span": {
+					"device_type": "linux",
+					"hostname": "192.168.2.212",
+					"username": "root",
+					"password": "vagrant",
+					"in_port": "eth0",
+					"out_port": "lo",
+					"direction": "both"
+				},
+        "in_switch": "0000000000000001",
+        "in_port": "s1-eth1",
+        "out_switch": "0000000000000003",
+        "out_port": "s3-eth2"
+    },
+    {
+        "name": "rule2",
+        "in_switch": "0000000000000001",
+        "in_port": "s1-eth2",
+        "out_switch": "0000000000000003",
+        "out_port": "s3-eth2"
+    }
+]
