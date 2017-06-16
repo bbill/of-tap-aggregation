@@ -1,0 +1,5 @@
+#
+####### tap-aggregation app requirements #######
+ryu
+networkx
+paramiko
