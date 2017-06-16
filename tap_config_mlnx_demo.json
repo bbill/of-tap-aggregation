@@ -1,0 +1,9 @@
+[
+    {
+        "name": "rule1",
+        "in_switch": "00017cfe90ea7600",
+        "in_port": "eth8",
+        "out_switch": "0004e41d2d46f600",
+        "out_port": "eth9"
+    }
+]

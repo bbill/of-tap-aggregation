@@ -18,7 +18,7 @@ from pprint import pprint
 import networkx as nx
 import paramiko
 
-TAP_CONFIG = 'tap_config.json'
+TAP_CONFIG = 'tap_config_mlnx_demo.json'
 
 tap_rules_config = [
     {
