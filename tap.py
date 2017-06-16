@@ -142,6 +142,7 @@ class SimpleTap(app_manager.RyuApp):
 
     def __init__(self, *args, **kwargs):
         super(SimpleTap, self).__init__(*args, **kwargs)
+        self.topology_api_app = self
         self.net=nx.DiGraph()
         self.switches = {}
         self.links = {}
@@ -165,11 +166,12 @@ class SimpleTap(app_manager.RyuApp):
         for port in dp.ports.values():
             self.logger.info("** port_name: {}, port_no: {}, speed: {}".format(port.name, port.port_no, port.curr_speed))
 
-        self.switches = get_switch(self, None)
+        self.switches = get_switch(self.topology_api_app, None)
         switch_ids = [switch.dp.id for switch in self.switches]
         self.net.add_nodes_from(switch_ids)
 
-        self.links = get_link(self, None)
+        self.links = get_link(self.topology_api_app, None)
+        print(self.links)
         link_ids = [(link.src.dpid,link.dst.dpid,{'s_port':link.src.port_no, 'd_port':link.dst.port_no}) for link in self.links]
         self.net.add_edges_from(link_ids)
         links = [(link.dst.dpid,link.src.dpid,{'s_port':link.dst.port_no, 'd_port':link.src.port_no}) for link in self.links]
