@@ -7,7 +7,7 @@ from ryu.controller import handler
 from ryu.controller import ofp_event
 from ryu.topology import api as topo_api
 from ryu.topology import event as topo_event
-from ryu.topology.api import get_switch, get_link
+from ryu.topology.api import get_switch, get_link, get_all_link
 from ryu.lib import dpid as lib_dpid
 from ryu.lib.dpid import dpid_to_str
 from ryu.lib import ofctl_nicira_ext
@@ -170,6 +170,8 @@ class SimpleTap(app_manager.RyuApp):
         switch_ids = [switch.dp.id for switch in self.switches]
         self.net.add_nodes_from(switch_ids)
 
+        print('********** links ************')
+        print([link.to_dict() for link in get_all_link(self).keys()])
         self.links = get_link(self.topology_api_app, None)
         print(self.links)
         link_ids = [(link.src.dpid,link.dst.dpid,{'s_port':link.src.port_no, 'd_port':link.dst.port_no}) for link in self.links]
