@@ -17,8 +17,11 @@ from ryu.ofproto import nicira_ext
 from pprint import pprint
 import networkx as nx
 import paramiko
+import netmiko
 
-TAP_CONFIG = 'tap_config_mlnx_demo.json'
+TAP_CONFIG = 'tap_config.json'
+MLNX_USERNAME = 'admin'
+MLNX_PASSWORD = 'admin'
 
 tap_rules_config = [
     {
@@ -143,9 +146,12 @@ class SimpleTap(app_manager.RyuApp):
     def __init__(self, *args, **kwargs):
         super(SimpleTap, self).__init__(*args, **kwargs)
         self.topology_api_app = self
+        # topology graph
         self.net=nx.DiGraph()
         self.switches = {}
         self.links = {}
+        # OF port_name to porn_no map
+        self.of_port_map = {}
         try:
             with open(TAP_CONFIG) as fh:
                 self.tap_rules_config = json.loads(fh.read())
@@ -161,28 +167,66 @@ class SimpleTap(app_manager.RyuApp):
     @handler.set_ev_cls(topo_event.EventSwitchEnter)
     def _switch_enter_handler(self, ev):
         dp = ev.switch.dp
-        self.logger.info('Switch {} joined. Reconfiguring the fabric'.format(dpid_to_str(dp.id)))
-        self.logger.info("Ports available on {}".format(dpid_to_str(dp.id)))
+        self.logger.info('Switch {} joined. Reconfiguring topology graph...'.format(dpid_to_str(dp.id)))
+        self.send_desc_stats_request(dp)
+        self.logger.info("Ports available on {}:".format(dpid_to_str(dp.id)))
+        # mapping port_name to port_no for switch DP
         for port in dp.ports.values():
+            new_map = { port.name.decode('UTF-8'): port.port_no }
+            if self.of_port_map.get(dp.id):
+                self.of_port_map[dp.id].update(new_map)
+            else:
+                self.of_port_map[dp.id] = new_map
             self.logger.info("** port_name: {}, port_no: {}, speed: {}".format(port.name, port.port_no, port.curr_speed))
 
+        # filling topology graph with current switches topology information
+        self.logger.info('********** switches ************')
         self.switches = get_switch(self.topology_api_app, None)
+        pprint([switch.to_dict() for switch in self.switches])
         switch_ids = [switch.dp.id for switch in self.switches]
         self.net.add_nodes_from(switch_ids)
 
-        print('********** links ************')
-        print([link.to_dict() for link in get_all_link(self).keys()])
+        # filling topology graph with current links topology information
+        self.logger.info('********** links ************')
         self.links = get_link(self.topology_api_app, None)
-        print(self.links)
+        pprint([link.to_dict() for link in self.links])
         link_ids = [(link.src.dpid,link.dst.dpid,{'s_port':link.src.port_no, 'd_port':link.dst.port_no}) for link in self.links]
         self.net.add_edges_from(link_ids)
         links = [(link.dst.dpid,link.src.dpid,{'s_port':link.dst.port_no, 'd_port':link.src.port_no}) for link in self.links]
         self.net.add_edges_from(link_ids)
 
+
+    @handler.set_ev_cls(ofp_event.EventOFPDescStatsReply, handler.MAIN_DISPATCHER)
+    def _desc_stats_reply_handler(self, ev):
+        dp = ev.msg.datapath
+        body = ev.msg.body
+        self.logger.info('Stats received for {}:'.format(dpid_to_str(dp.id)))
+        self.logger.info('** dp_desc: {}\n'
+                         '** mfr_desc: {}\n'
+                         '** hw_desc: {}\n'
+                         '** sw_desc: {}\n'
+                         '** serial_num: {}'
+                         ''.format(body.dp_desc, body.mfr_desc, body.hw_desc,
+                                body.sw_desc, body.serial_num))
+        if 'MLNX' in body.dp_desc.decode('UTF-8'):
+            self.logger.info('{} is a Mellanox switch. Fixing port numbering...'.format(dpid_to_str(dp.id)))
+            mlnx_of_ports = self.get_mlnx_of_ports(dp)
+            self.logger.info('Finished OF port fixing for {}.'.format(dpid_to_str(dp.id)))
+            switch = self.of_port_map.get(dp.id)
+            if switch:
+                switch.update(mlnx_of_ports)
+        self.logger.info('Reconfiguring filters...')
         # resetting all rules
         self.reset_rules()
         # reconfiguring all rules
         self.reconfigure_rules()
+
+
+    def send_desc_stats_request(self, dp):
+        parser = dp.ofproto_parser
+        req = parser.OFPDescStatsRequest(dp, 0)
+        self.logger.info('Sending stats request to "{}"...'.format(dpid_to_str(dp.id)))
+        dp.send_msg(req)
 
 
     def reset_rules(self):
@@ -257,21 +301,55 @@ class SimpleTap(app_manager.RyuApp):
         client.del_filters(in_port)
         client.add_filter(in_port, out_port, direction=direction)
 
+
     def get_switch_dp(self, dpid):
         for switch in self.switches:
             if switch.dp.id == dpid:
                 return switch.dp
 
+
     def get_of_port_no(self, dp, port_name):
-        for port in dp.ports.values():
-            if port.name == port_name.encode('UTF-8'):
-                return port.port_no
+        # get OF port_name from of_port_map
+        switch = self.of_port_map.get(dp.id)
+        if switch:
+            return switch.get(port_name)
+        # for port in dp.ports.values():
+        #     if port.name == port_name.encode('UTF-8'):
+        #         return port.port_no
         return None
 
+    def get_mlnx_of_ports(self, dp):
+        # Mellanox swithes (Spectrum, SwitchX-2) do not provide persistant
+        # OF port naming and numbering. Therefore, other method of getting it
+        # is used for such switches: parsing CLI output of command
+        # 'show openflow' via SSH connection
+        of_ports = None
+        ip = dp.address[0]
+        self.logger.info('Getting OF port config from {} (IP: {})'.format(dpid_to_str(dp.id), ip))
+        try:
+            ssh = netmiko.ConnectHandler(device_type='mellanox_ssh', ip=ip,
+                                         username=MLNX_USERNAME, password=MLNX_PASSWORD)
+            output = ssh_conn.send_command('show openflow')
+            # splitting the output into map of switch_port_name:of_port_no
+            of_ports = dict(map(lambda x: x.strip().split(),
+                        filter(lambda x: x.strip().startswith('Eth'), output.split('\n'))))
+        except Exception as e:
+            self.logger.error('Error getting OF ports from {}: {}'.format(dpid_to_str((dp.id), e)))
+        else:
+            ssh.close()
+            self.logger.info('** OF ports from {}'.format(dpid_to_str((dp.id))))
+            pprint(of_ports)
+        return of_ports
+
     def get_of_port_name(self, dp, port_no):
-        for port in dp.ports.values():
-            if port.port_no == port_no:
-                return port.name
+        switch = self.of_port_map.get(dp.id)
+        if switch:
+            for port_name in switch.keys():
+                if switch[port_name] == port_no:
+                    return port_name
+        # for port in dp.ports.values():
+        #     if port.port_no == port_no:
+        #         return port.name
         return None
 
 

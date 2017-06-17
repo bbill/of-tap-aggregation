@@ -1,7 +1,7 @@
 [
     {
         "name": "rule1",
-				"span": {
+				"_span": {
 					"device_type": "linux",
 					"hostname": "192.168.2.212",
 					"username": "root",
