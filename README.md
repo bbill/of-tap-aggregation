@@ -1,5 +1,5 @@
 # SimpleTAP - OpenFlow TAP Aggregation App
-SimpleTAP it's an SDN application for [Ryu SDN Controller](https://osrg.github.io/ryu/), which configures TAP Aggregation Fabric with OpenFlow switches.
+**SimpleTAP** is an SDN application for [Ryu SDN Controller](https://osrg.github.io/ryu/), which configures TAP Aggregation Fabric with OpenFlow switches.
 ## Installation
 * Install Python (2.7 and 3.4+ is supported)
 * Get App from Github: `git clone git://github.com/kvadrage/of-tap-aggregation.git && cd of-tap-aggregation`
