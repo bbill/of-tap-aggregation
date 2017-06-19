@@ -19,12 +19,12 @@
     - Mellanox switches with [MLNX-OS](http://www.mellanox.com/page/mlnx_os)
 * Run the App: `./run.sh`
 ## App configuration file
-App configuration is represented as a dictionary and loaded on start from JSON file  `config.json` and structured into three major sections:
-* **switches** - defines switch DPIDs, that are allowed to participate in TAP Aggregation fabric
+App configuration is represented as a dictionary and loaded at start from JSON file `config.json`. It's structured into three major sections:
+* **switches** - defines switch DPIDs in hex, that are allowed to participate in TAP Aggregation fabric
 * **rules** - defines all TAP rules, that build end-to-end TAP sessions to deliver traffic from TAP devices to monitoring servers through entire fabric
   - only ingress switch (ingress port) and egress switch (egress port) are required to be defined
-  - App will outomatically build the path the fabric and program OpenFlow rules end-to-end
-* **taps** - defines active TAP devices, where automatic SPAN/Mirroring configuration is also required
+  - App will automatically build end-to-end path in the fabric and configure OpenFlow rules on fabric switches
+* **taps** - defines active TAP devices on that automatic SPAN/Mirroring configuration is also required
 ### switches example
 ```json
 "switches": {
