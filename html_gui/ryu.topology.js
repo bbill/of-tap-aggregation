@@ -11,7 +11,7 @@ var CONF = {
     }
 };
 
-var ws = new WebSocket("ws://localhost:8080/v1.0/topology/ws");
+var ws = new WebSocket("ws://10.143.34.15:8080/v1.0/topology/ws");
 ws.onmessage = function(event) {
     var data = JSON.parse(event.data);
 
@@ -59,7 +59,7 @@ function _tick() {
 elem.drag = elem.force.drag().on("dragstart", _dragstart);
 function _dragstart(d) {
     var dpid = dpid_to_int(d.dpid)
-    d3.json("http://localhost:8080/stats/flow/" + dpid, function(e, data) {
+    d3.json("http://10.143.34.15:8080/stats/flow/" + dpid, function(e, data) {
         flows = data[dpid];
         console.log(flows);
         elem.console.selectAll("ul").remove();
@@ -266,8 +266,8 @@ var rpc = {
 }
 
 function initialize_topology() {
-    d3.json("http://localhost:8080/v1.0/topology/switches", function(error, switches) {
-        d3.json("http://localhost:8080/v1.0/topology/links", function(error, links) {
+    d3.json("http://10.143.34.15:8080/v1.0/topology/switches", function(error, switches) {
+        d3.json("http://10.143.34.15:8080/v1.0/topology/links", function(error, links) {
             topo.initialize({switches: switches, links: links});
             elem.update();
         });

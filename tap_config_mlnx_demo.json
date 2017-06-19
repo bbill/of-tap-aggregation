@@ -1,9 +1,46 @@
-[
-    {
-        "name": "rule1",
-        "in_switch": "00017cfe90ea7600",
-        "in_port": "eth8",
-        "out_switch": "0004e41d2d46f600",
-        "out_port": "eth9"
+{
+  "switches": {
+    "00017cfe90ea7600": {
+      "name": "l-csi-demo-sn2700-57",
+      "vendor": "Mellanox",
+      "tag": "leaf01"
+    },
+    "0004e41d2d46f600": {
+      "name": "l-csi-demo-sn2700-58",
+      "vendor": "Mellanox",
+      "tag": "leaf02"
+    },
+    "00027cfe90ea7680": {
+      "name": "l-csi-demo-sn2700-56",
+      "vendor": "Mellanox",
+      "tag": "spine01"
+    },
+    "00037cfe90e76840": {
+      "name": "l-csi-demo-sn2700-55",
+      "vendor": "Mellanox",
+      "tag": "spine02"
     }
-]
+  },
+  "rules": {
+    "rule1": {
+      "in_switch": "00017cfe90ea7600",
+      "in_port": "eth8",
+      "out_switch": "0004e41d2d46f600",
+      "out_port": "eth9"
+    },
+    "rule2": {
+      "in_switch": "00017cfe90ea7600",
+      "in_port": "eth9",
+      "out_switch": "0004e41d2d46f600",
+      "out_port": "eth9"
+    }
+  },
+  "taps": {
+    "tap1": {
+      "device_type": "mellanox",
+      "hostname": "10.143.34.57",
+      "username": "admin",
+      "password": "admin"
+    }
+  }
+}
