@@ -1,5 +1,7 @@
-#
-####### tap-aggregation app requirements #######
+####### Python package requirements #######
+## Run: "pip install -r requrements.txt" ##
 ryu
 networkx
 paramiko
+netmiko
+pprint

@@ -1,12 +1,13 @@
 #!/usr/bin/python
-"""Custom topology example
+""" Running Mininet with custom topology to test OpenFlow TAP Aggregation App
 
-Two directly connected switches plus a host for each switch:
+Theree directly connected switches plus three hosts:
 
-   h1 --- sw1 --- sw2 --- h2
+   h1 ---\
+         s1 --- s2 --- s3 --- h3
+   h2 ---/
 
-Adding the 'topos' dict with a key/value pair to generate our newly defined
-topology enables one to pass in '--topo=mytopo' from the command line.
+Usage: sudo ./topo.py <controller_ip>
 """
 
 import sys
@@ -48,8 +49,6 @@ class MyTopo( Topo ):
         self.addLink( s1, s2 )
         self.addLink( s2, s3 )
         self.addLink( s3, h3 )
-        #self.addLink(s2, h3)
-
 
 if __name__ == "__main__":
     setLogLevel( 'info' )

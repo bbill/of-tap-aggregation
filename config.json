@@ -8,12 +8,12 @@
     "0000000000000002": {
       "name": "s2",
       "vendor": "OVS",
-      "tag": "transit"
+      "tag": "service"
     },
     "0000000000000003": {
       "name": "s3",
       "vendor": "OVS",
-      "tag": "tool"
+      "tag": "delivery"
     }
   },
   "rules": {
@@ -23,11 +23,11 @@
       "out_switch": "0000000000000003",
       "out_port": "s3-eth2",
       "span": {
-        "tap": "tap2",
-        "in_port": "1/20",
-        "out_port": "1/21",
+        "tap": "tap1",
+        "in_port": "eth0",
+        "out_port": "lo",
         "direction": "both",
-        "truncate": false
+        "skip_sw": true
       }
     },
     "rule2": {
@@ -35,18 +35,19 @@
       "in_port": "s1-eth1",
       "out_switch": "0000000000000003",
       "out_port": "s3-eth2",
-      "span": {
-        "tap": "tap1",
-        "in_port": "eth0",
-        "out_port": "lo",
-        "direction": "both"
+      "_span": {
+        "tap": "tap2",
+        "in_port": "1/20",
+        "out_port": "1/21",
+        "direction": "both",
+        "truncate": false
       }
     }
   },
   "taps": {
     "tap1": {
       "device_type": "linux",
-      "hostname": "192.168.2.212",
+      "hostname": "192.168.56.101",
       "username": "root",
       "password": "vagrant"
     },
